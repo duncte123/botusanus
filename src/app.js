@@ -2,7 +2,6 @@ import dotenv from 'dotenv';
 import express from 'express';
 import session from 'express-session';
 import initRouter from './router';
-import initTwitter from './twitterApi';
 
 dotenv.config();
 
@@ -16,7 +15,6 @@ app.use(session({
 }));
 
 initRouter(app);
-initTwitter();
 
 app.listen(port, () => {
     console.log(`App listening at http://localhost:${port}`)

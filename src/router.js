@@ -1,4 +1,7 @@
-import { twitterClient } from './twitterApi';
+import { getDefaultClient, getClient } from './twitterApi';
+import fs from 'fs';
+
+const CREDENTIALS = `${__dirname}/../credentials.json`;
 
 /**
  *
@@ -7,6 +10,7 @@ import { twitterClient } from './twitterApi';
 export default function init(app) {
     app.get('/login', async (req, res) => {
         try {
+            const twitterClient = getDefaultClient();
             const { oauth_token, oauth_token_secret } = await twitterClient.basics.oauthRequestToken({
                 oauth_callback: process.env.TWITTER_CALLBACK,
             });
@@ -14,7 +18,7 @@ export default function init(app) {
             req.session.oauth_token = oauth_token;
             req.session.oauth_token_secret = oauth_token_secret;
 
-            const url = `https://api.twitter.com/oauth/authenticate?oauth_token=${oauth_token}`;
+            const url = `https://api.twitter.com/oauth/authorize?oauth_token=${oauth_token}`;
 
             res.redirect(url);
         } catch (e) {
@@ -24,25 +28,47 @@ export default function init(app) {
         }
     });
 
-    app.get('/callback', (req, res) => {
-        // this is probably only needed for webhooks
-        if (!req.query.oauth_verifier) {
-            res.status(403);
+    app.get('/callback', async (req, res) => {
+        try {
+            const oauth_verifier = req.query.oauth_verifier;
+
+            // this is probably only needed for webhooks
+            if (!oauth_verifier) {
+                res.status(403);
+                res.send({
+                    error: 'Lol failed',
+                });
+                return;
+            }
+
+            const { oauth_token, oauth_token_secret } = req.session;
+            const client = getClient(oauth_token, oauth_token_secret);
+
+            const data = await client.basics.oauthAccessToken({ oauth_verifier });
+
+            console.log(data);
+
+            // Store the credentials in a file
+            fs.writeFileSync(CREDENTIALS, JSON.stringify(data));
+
             res.send({
-                error: 'Lol failed',
+                success: true,
+            });
+        } catch (e) {
+            console.error(e);
+            res.send(`Error: ${e.message}`);
+        }
+    });
+
+    app.get('/tweet', async (req, res) => {
+        if (!fs.existsSync(CREDENTIALS)) {
+            res.send({
+                error: 'THE FILE IS GONE REEE',
             });
             return;
         }
 
-
-        res.send('oops');
+        const { oauth_token, oauth_token_secret } = fs.readFileSync(CREDENTIALS);
+        const client = getClient(oauth_token, oauth_token_secret);
     });
-}
-
-/**
- *
- * @param {String} crcToken
- */
-function handleCrC(crcToken) {
-    //
 }

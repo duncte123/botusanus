@@ -1,23 +1,23 @@
 import { TwitterClient } from 'twitter-api-client';
-import Twitter from 'twitter';
 
 /**
- * @var {TwitterClient}
+ * @return {TwitterClient}
  */
-export let twitterClient;
+export function getDefaultClient() {
+    return getClient(
+        process.env.TWITTER_ACCESS_TOKEN_KEY,
+        process.env.TWITTER_ACCESS_TOKEN_SECRET
+    );
+}
 
-export default function init() {
-    twitterClient = new TwitterClient({
+/**
+ * @return {TwitterClient}
+ */
+export function getClient(accessToken, accessTokenSecret) {
+    return new TwitterClient({
         apiKey: process.env.TWITTER_CONSUMER_KEY,
         apiSecret: process.env.TWITTER_CONSUMER_SECRET,
-        accessToken: process.env.TWITTER_ACCESS_TOKEN_KEY,
-        accessTokenSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET,
+        accessToken,
+        accessTokenSecret,
     });
-
-    /*twitterClient = new Twitter({
-        consumer_key: '',
-        consumer_secret: '',
-        access_token_key: '',
-        access_token_secret: ''
-    });*/
 }
