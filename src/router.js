@@ -68,7 +68,15 @@ export default function init(app) {
             return;
         }
 
-        const { oauth_token, oauth_token_secret } = fs.readFileSync(CREDENTIALS);
+        const { oauth_token, oauth_token_secret } = JSON.parse(fs.readFileSync(CREDENTIALS));
         const client = getClient(oauth_token, oauth_token_secret);
+
+        client.tweets.statusesUpdate({
+            status: 'Memento Mori, Unus Annus.',
+        }).catch(console.error);
+
+        res.send({
+            success: true,
+        });
     });
 }
